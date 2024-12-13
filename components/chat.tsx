@@ -13,9 +13,11 @@ import { fetcher } from '@/lib/utils';
 
 import { Block, type UIBlock } from './block';
 import { BlockStreamHandler } from './block-stream-handler';
-import { MultimodalInput } from './multimodal-input';
 import { Messages } from './messages';
+import { MultimodalInput } from './multimodal-input';
 import { VisibilityType } from './visibility-selector';
+
+import { AdsProvider } from '@kontextso/sdk';
 
 export function Chat({
   id,
@@ -78,29 +80,55 @@ export function Chat({
 
   return (
     <>
-      <div className="flex flex-col min-w-0 h-dvh bg-background">
-        <ChatHeader
-          chatId={id}
-          selectedModelId={selectedModelId}
-          selectedVisibilityType={selectedVisibilityType}
-          isReadonly={isReadonly}
-        />
+      <AdsProvider
+        publisherToken={process.env.NEXT_PUBLIC_KONTEXT_TOKEN || ''}
+        isLoading={isLoading}
+        messages={messages}
+        userId={'user-id-here'}
+        conversationId={id}
+      >
+        <div className="flex flex-col min-w-0 h-dvh bg-background">
+          <ChatHeader
+            chatId={id}
+            selectedModelId={selectedModelId}
+            selectedVisibilityType={selectedVisibilityType}
+            isReadonly={isReadonly}
+          />
 
-        <Messages
-          chatId={id}
-          block={block}
-          setBlock={setBlock}
-          isLoading={isLoading}
-          votes={votes}
-          messages={messages}
-          setMessages={setMessages}
-          reload={reload}
-          isReadonly={isReadonly}
-        />
+          <Messages
+            chatId={id}
+            block={block}
+            setBlock={setBlock}
+            isLoading={isLoading}
+            votes={votes}
+            messages={messages}
+            setMessages={setMessages}
+            reload={reload}
+            isReadonly={isReadonly}
+          />
 
-        <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
-          {!isReadonly && (
-            <MultimodalInput
+          <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
+            {!isReadonly && (
+              <MultimodalInput
+                chatId={id}
+                input={input}
+                setInput={setInput}
+                handleSubmit={handleSubmit}
+                isLoading={isLoading}
+                stop={stop}
+                attachments={attachments}
+                setAttachments={setAttachments}
+                messages={messages}
+                setMessages={setMessages}
+                append={append}
+              />
+            )}
+          </form>
+        </div>
+
+        <AnimatePresence>
+          {block?.isVisible && (
+            <Block
               chatId={id}
               input={input}
               setInput={setInput}
@@ -109,38 +137,20 @@ export function Chat({
               stop={stop}
               attachments={attachments}
               setAttachments={setAttachments}
+              append={append}
+              block={block}
+              setBlock={setBlock}
               messages={messages}
               setMessages={setMessages}
-              append={append}
+              reload={reload}
+              votes={votes}
+              isReadonly={isReadonly}
             />
           )}
-        </form>
-      </div>
+        </AnimatePresence>
 
-      <AnimatePresence>
-        {block?.isVisible && (
-          <Block
-            chatId={id}
-            input={input}
-            setInput={setInput}
-            handleSubmit={handleSubmit}
-            isLoading={isLoading}
-            stop={stop}
-            attachments={attachments}
-            setAttachments={setAttachments}
-            append={append}
-            block={block}
-            setBlock={setBlock}
-            messages={messages}
-            setMessages={setMessages}
-            reload={reload}
-            votes={votes}
-            isReadonly={isReadonly}
-          />
-        )}
-      </AnimatePresence>
-
-      <BlockStreamHandler streamingData={streamingData} setBlock={setBlock} />
+        <BlockStreamHandler streamingData={streamingData} setBlock={setBlock} />
+      </AdsProvider>
     </>
   );
 }
